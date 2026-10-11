@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/keranjang_buku_model.dart';
+import '../models/favorit_buku_model.dart';
+import '../navigation/app_routes.dart';
 
-class HalamanDetailBuku extends StatelessWidget {
+class HalamanDetailBuku extends StatefulWidget {
   final String judul;
   final String penulis;
   final String penerbit;
@@ -21,9 +25,51 @@ class HalamanDetailBuku extends StatelessWidget {
   });
 
   @override
+  State<HalamanDetailBuku> createState() => _HalamanDetailBukuState();
+}
+
+class _HalamanDetailBukuState extends State<HalamanDetailBuku> {
+  // Local state untuk status transaksi pembayaran instan Midtrans
+  bool _sedangMemproses = false;
+
+  Map<String, dynamic> _bukuData() {
+    return {
+      'judul': widget.judul,
+      'penulis': widget.penulis,
+      'penerbit': widget.penerbit,
+      'harga': widget.harga,
+      'kategori': widget.kategori,
+      'sinopsis': widget.sinopsis,
+      'rating': widget.rating,
+    };
+  }
+
+  Future<void> _prosesTransaksiMidtrans() async {
+    setState(() {
+      _sedangMemproses = true;
+    });
+
+    // Simulasi enkripsi transaksi dan verifikasi token pembayaran Midtrans
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    // Masukkan ke keranjang/riwayat transaksi
+    context.read<KeranjangBukuModel>().tambahBuku(_bukuData());
+
+    Navigator.pop(
+      context,
+      'Pembelian e-book "${widget.judul}" (${widget.harga}) berhasil diverifikasi via Payment Gateway Midtrans!',
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF0F7EAD);
     const accentColor = Color(0xFF1BABE2);
+
+    final bool isFavorit = context.watch<FavoritBukuModel>().apakahFavorit(widget.judul);
+    final bool diKeranjang = context.watch<KeranjangBukuModel>().adaDiKeranjang(widget.judul);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -31,6 +77,35 @@ class HalamanDetailBuku extends StatelessWidget {
         title: const Text('Detail E-Book'),
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: Icon(
+              isFavorit ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              color: isFavorit ? Colors.redAccent : Colors.white,
+            ),
+            tooltip: isFavorit ? 'Hapus dari Wishlist' : 'Tambah ke Wishlist',
+            onPressed: () {
+              final model = context.read<FavoritBukuModel>();
+              model.toggleFavorit(_bukuData());
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isFavorit
+                        ? 'E-Book "${widget.judul}" dihapus dari Wishlist.'
+                        : 'E-Book "${widget.judul}" ditambahkan ke Wishlist!',
+                  ),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.shopping_bag_outlined),
+            tooltip: 'Keranjang Belanja',
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.koleksiBaca),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
@@ -67,10 +142,12 @@ class HalamanDetailBuku extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.white54, width: 1.5),
                     ),
-                    child: const Icon(
-                      Icons.menu_book_rounded,
-                      size: 50,
-                      color: Colors.white,
+                    child: const Center(
+                      child: Icon(
+                        Icons.menu_book_rounded,
+                        size: 50,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -85,7 +162,7 @@ class HalamanDetailBuku extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            kategori.toUpperCase(),
+                            widget.kategori.toUpperCase(),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -96,7 +173,7 @@ class HalamanDetailBuku extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          judul,
+                          widget.judul,
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -105,7 +182,7 @@ class HalamanDetailBuku extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Oleh: $penulis',
+                          'Oleh: ${widget.penulis}',
                           style: const TextStyle(fontSize: 13, color: Colors.white70),
                         ),
                         const SizedBox(height: 4),
@@ -114,7 +191,7 @@ class HalamanDetailBuku extends StatelessWidget {
                             const Icon(Icons.star_rounded, color: Colors.amberAccent, size: 18),
                             const SizedBox(width: 4),
                             Text(
-                              rating,
+                              widget.rating,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -148,9 +225,9 @@ class HalamanDetailBuku extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildInfoColumn('Penerbit', penerbit, Icons.business_rounded, primaryColor),
+                    _buildInfoColumn('Penerbit', widget.penerbit, Icons.business_rounded, primaryColor),
                     Container(height: 40, width: 1, color: Colors.grey.shade300),
-                    _buildInfoColumn('Harga Resmi', harga, Icons.payments_rounded, Colors.green.shade700),
+                    _buildInfoColumn('Harga Resmi', widget.harga, Icons.payments_rounded, Colors.green.shade700),
                     Container(height: 40, width: 1, color: Colors.grey.shade300),
                     _buildInfoColumn('Proteksi', 'DRM Protected', Icons.security_rounded, primaryColor),
                   ],
@@ -177,7 +254,7 @@ class HalamanDetailBuku extends StatelessWidget {
                 border: Border.all(color: Colors.grey.shade200),
               ),
               child: Text(
-                sinopsis,
+                widget.sinopsis,
                 style: const TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF334155)),
                 textAlign: TextAlign.justify,
               ),
@@ -207,18 +284,60 @@ class HalamanDetailBuku extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Tombol Aksi Transaksi & Nilai Balik
+            // Tombol 1: Tambah ke Keranjang
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: diKeranjang
+                    ? () {
+                        context.read<KeranjangBukuModel>().hapusBuku(widget.judul);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('E-Book "${widget.judul}" dikeluarkan dari keranjang.'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    : () {
+                        context.read<KeranjangBukuModel>().tambahBuku(_bukuData());
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('E-Book "${widget.judul}" berhasil dimasukkan ke keranjang!'),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: primaryColor,
+                          ),
+                        );
+                      },
+                icon: Icon(diKeranjang ? Icons.remove_shopping_cart_rounded : Icons.add_shopping_cart_rounded),
+                label: Text(diKeranjang ? 'Hapus dari Keranjang Belanja' : 'Tambah ke Keranjang Belanja'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: diKeranjang ? Colors.red.shade700 : primaryColor,
+                  side: BorderSide(color: diKeranjang ? Colors.red.shade300 : primaryColor, width: 1.5),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Tombol 2: Aksi Transaksi Instan Midtrans dengan Local State Loading
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(
-                    context,
-                    'Pembelian e-book "$judul" ($harga) berhasil diproses via Midtrans!',
-                  );
-                },
-                icon: const Icon(Icons.shopping_cart_checkout_rounded),
-                label: Text('Beli E-Book Sekarang ($harga) via Midtrans'),
+                onPressed: _sedangMemproses ? null : _prosesTransaksiMidtrans,
+                icon: _sedangMemproses
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.payments_rounded),
+                label: Text(
+                  _sedangMemproses
+                      ? 'Memproses Transaksi Midtrans...'
+                      : 'Beli E-Book Sekarang (${widget.harga}) via Midtrans',
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
@@ -229,32 +348,23 @@ class HalamanDetailBuku extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
+
+            // Tombol 3: Pratinjau Bab 1
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton.icon(
+              child: TextButton.icon(
                 onPressed: () {
                   Navigator.pop(
                     context,
-                    'Pratinjau Bab 1 "$judul" telah dibuka pada Web Reader terproteksi.',
+                    'Pratinjau Bab 1 "${widget.judul}" telah dibuka pada Web Reader terproteksi.',
                   );
                 },
                 icon: const Icon(Icons.chrome_reader_mode_rounded),
                 label: const Text('Buka Pratinjau Bab 1 (Gratis)'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: primaryColor,
-                  side: const BorderSide(color: primaryColor, width: 1.5),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF64748B),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Center(
-              child: TextButton.icon(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back_rounded, size: 16),
-                label: const Text('Kembali tanpa Transaksi'),
-                style: TextButton.styleFrom(foregroundColor: Colors.grey.shade600),
               ),
             ),
           ],

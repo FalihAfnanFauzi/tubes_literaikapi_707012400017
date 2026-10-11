@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/keranjang_buku_model.dart';
+import '../models/favorit_buku_model.dart';
 import '../navigation/app_routes.dart';
 
 class HalamanKatalog extends StatelessWidget {
@@ -63,11 +66,18 @@ class HalamanKatalog extends StatelessWidget {
     Color primaryColor,
     Color accentColor,
   ) {
+    final favoritModel = context.watch<FavoritBukuModel>();
+    final keranjangModel = context.watch<KeranjangBukuModel>();
+
     return ListView.builder(
       padding: const EdgeInsets.all(12),
       itemCount: daftar.length,
-      itemBuilder: (context, index) {
+      itemBuilder: (itemContext, index) {
         final buku = daftar[index];
+        final judul = buku['judul'] ?? '';
+        final isFavorit = favoritModel.apakahFavorit(judul);
+        final diKeranjang = keranjangModel.adaDiKeranjang(judul);
+
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           elevation: 1.5,
@@ -80,7 +90,7 @@ class HalamanKatalog extends StatelessWidget {
               children: [
                 Container(
                   width: 60,
-                  height: 80,
+                  height: 85,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [primaryColor.withValues(alpha: 0.8), accentColor],
@@ -98,13 +108,44 @@ class HalamanKatalog extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        buku['judul']!,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              judul,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: Icon(
+                              isFavorit ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                              color: isFavorit ? Colors.redAccent : Colors.grey.shade400,
+                              size: 22,
+                            ),
+                            tooltip: isFavorit ? 'Hapus dari Wishlist' : 'Tambah ke Wishlist',
+                            onPressed: () {
+                              itemContext.read<FavoritBukuModel>().toggleFavorit(buku);
+                              ScaffoldMessenger.of(itemContext).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isFavorit
+                                        ? 'E-Book "$judul" dihapus dari Wishlist.'
+                                        : 'E-Book "$judul" ditambahkan ke Wishlist!',
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -128,40 +169,77 @@ class HalamanKatalog extends StatelessWidget {
                               color: Colors.green.shade700,
                             ),
                           ),
-                          ElevatedButton(
-                            onPressed: () async {
-                              final hasil = await Navigator.pushNamed(
-                                context,
-                                AppRoutes.detailBuku,
-                                arguments: buku,
-                              );
-                              if (hasil != null && context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Row(
-                                      children: [
-                                        const Icon(Icons.check_circle_rounded, color: Colors.white),
-                                        const SizedBox(width: 8),
-                                        Expanded(child: Text('$hasil')),
-                                      ],
-                                    ),
-                                    backgroundColor: primaryColor,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    duration: const Duration(seconds: 4),
-                                  ),
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            child: const Text('Rincian & Beli', style: TextStyle(fontSize: 12)),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  diKeranjang
+                                      ? Icons.shopping_cart_rounded
+                                      : Icons.add_shopping_cart_rounded,
+                                  color: diKeranjang ? primaryColor : Colors.grey.shade600,
+                                  size: 20,
+                                ),
+                                tooltip: diKeranjang ? 'Ada di Keranjang' : 'Tambah ke Keranjang',
+                                onPressed: () {
+                                  if (diKeranjang) {
+                                    itemContext.read<KeranjangBukuModel>().hapusBuku(judul);
+                                    ScaffoldMessenger.of(itemContext).showSnackBar(
+                                      SnackBar(
+                                        content: Text('E-Book "$judul" dikeluarkan dari keranjang.'),
+                                        duration: const Duration(seconds: 2),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  } else {
+                                    itemContext.read<KeranjangBukuModel>().tambahBuku(buku);
+                                    ScaffoldMessenger.of(itemContext).showSnackBar(
+                                      SnackBar(
+                                        content: Text('E-Book "$judul" dimasukkan ke keranjang belanja!'),
+                                        duration: const Duration(seconds: 2),
+                                        behavior: SnackBarBehavior.floating,
+                                        backgroundColor: primaryColor,
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                              const SizedBox(width: 4),
+                              ElevatedButton(
+                                onPressed: () async {
+                                  final hasil = await Navigator.pushNamed(
+                                    itemContext,
+                                    AppRoutes.detailBuku,
+                                    arguments: buku,
+                                  );
+                                  if (hasil != null && itemContext.mounted) {
+                                    ScaffoldMessenger.of(itemContext).showSnackBar(
+                                      SnackBar(
+                                        content: Row(
+                                          children: [
+                                            const Icon(Icons.check_circle_rounded, color: Colors.white),
+                                            const SizedBox(width: 8),
+                                            Expanded(child: Text('$hasil')),
+                                          ],
+                                        ),
+                                        backgroundColor: primaryColor,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        duration: const Duration(seconds: 4),
+                                      ),
+                                    );
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                child: const Text('Detail', style: TextStyle(fontSize: 12)),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -188,24 +266,24 @@ class HalamanKatalog extends StatelessWidget {
           'Kisah inspiratif tentang perjuangan pemuda pedesaan Priangan dalam menempuh pendidikan modern tanpa melupakan akar budaya leluhurnya. Menghadirkan deskripsi alam Priangan yang memukau.',
     },
     {
-      'judul': 'Jejak Sang Pengelana Sunda',
-      'penulis': 'Dadan Sutisna',
-      'penerbit': 'Kiblat Buku Utama (IKAPI)',
+      'judul': 'Sang Guru di Kota Kembang',
+      'penulis': 'Ahmad Fauzi Ridwan',
+      'penerbit': 'Penerbit Rosda Bandung (IKAPI)',
       'harga': 'Rp 52.000',
       'kategori': 'Fiksi & Sastra',
       'rating': '4.8',
       'sinopsis':
-          'Novel petualangan epik yang berlatar abad ke-16 menyusuri aliran Sungai Citarum, membawa pesan persahabatan, keberanian, dan pelestarian lingkungan hidup Jawa Barat.',
+          'Sebuah novel perjuangan pendidik pada dekade 1970-an di Bandung yang merintis perpustakaan keliling demi mencerdaskan generasi penerus bangsa.',
     },
     {
-      'judul': 'Misteri Kabut Tangkuban Parahu',
-      'penulis': 'Siti Nurhaliza A.',
-      'penerbit': 'Rosdakarya Publishing (IKAPI)',
-      'harga': 'Rp 39.000',
+      'judul': 'Misteri Benteng Pasir Ipis Lembang',
+      'penulis': 'Dewi Saraswati',
+      'penerbit': 'Mizan Digital (IKAPI Jabar)',
+      'harga': 'Rp 38.000',
       'kategori': 'Fiksi & Sastra',
       'rating': '4.7',
       'sinopsis':
-          'Sebuah fiksi misteri remaja berlatar observatorium geologi di kaki gunung vulkanik Bandung Utara yang sarat dengan teka-teki ilmiah dan mitologi kearifan lokal.',
+          'Kisah petualangan sekelompok mahasiswa arkeologi yang meneliti peninggalan bersejarah kolonial di perbukitan Lembang dan mengungkap rahasia arsip naskah kuno.',
     },
   ];
 
@@ -215,30 +293,30 @@ class HalamanKatalog extends StatelessWidget {
       'penulis': 'Tim Dosen Informatika Telkom',
       'penerbit': 'Telkom University Press (IKAPI)',
       'harga': 'Rp 75.000',
-      'kategori': 'Pendidikan & Sains',
+      'kategori': 'Pendidikan',
       'rating': '5.0',
       'sinopsis':
-          'Buku referensi komprehensif mengulas arsitektur widget Flutter, state management, named routes, responsive layout, integrasi Web API, dan deployment aplikasi Android & iOS.',
+          'Panduan komprehensif pengembangan aplikasi mobile multiplatform dari arsitektur dasar, navigasi tingkat lanjut, state management provider, hingga deployment production.',
     },
     {
-      'judul': 'Arsitektur Kota Cerdas & IoT Terpadu',
+      'judul': 'Dasar-Dasar Rekayasa Perangkat Lunak Cerdas',
       'penulis': 'Dr. Ir. Hendra Gunawan, M.T.',
-      'penerbit': 'Alfabeta Bandung (IKAPI)',
+      'penerbit': 'Informatika ITB Bandung (IKAPI)',
       'harga': 'Rp 88.000',
-      'kategori': 'Pendidikan & Sains',
-      'rating': '4.9',
-      'sinopsis':
-          'Kajian mendalam penerapan teknologi Internet of Things, kecerdasan buatan, dan tata kelola big data dalam mewujudkan ekosistem smart governance dan smart mobility perkotaan.',
-    },
-    {
-      'judul': 'Ekonomi Digital & Model Monetisasi E-Book',
-      'penulis': 'Ahmad Fauzi & Prof. Suryadi',
-      'penerbit': 'Remaja Rosdakarya (IKAPI)',
-      'harga': 'Rp 60.000',
-      'kategori': 'Pendidikan & Sains',
+      'kategori': 'Pendidikan',
       'rating': '4.8',
       'sinopsis':
-          'Panduan praktis bagi penerbit dan penulis dalam bertransformasi digital, mengintegrasikan payment gateway, serta mengelola royalti berbasis platform marketplace modern.',
+          'Buku referensi standar perguruan tinggi mengenai siklus hidup pengembangan perangkat lunak, metodologi agile, dan penerapan kecerdasan buatan pada industri.',
+    },
+    {
+      'judul': 'Kalkulus Terapan untuk Sains Data',
+      'penulis': 'Prof. Dr. Suryana',
+      'penerbit': 'Penerbit ITB (IKAPI)',
+      'harga': 'Rp 65.000',
+      'kategori': 'Pendidikan',
+      'rating': '4.6',
+      'sinopsis':
+          'Konsep kalkulus diferensial dan integral yang diterapkan langsung pada optimasi algoritma pembelajaran mesin dan representasi vektor data.',
     },
   ];
 
@@ -248,30 +326,30 @@ class HalamanKatalog extends StatelessWidget {
       'penulis': 'Budi Rahayu Tamsyah',
       'penerbit': 'Geger Sunten (IKAPI)',
       'harga': 'Rp 40.000',
-      'kategori': 'Budaya Sunda & Jabar',
+      'kategori': 'Budaya Sunda',
       'rating': '4.9',
       'sinopsis':
-          'Koleksi rujukan otentik tata bahasa, undak-usuk basa Sunda, serta nilai-nilai silih asih, silih asah, dan silih asuh yang menjadi pilar peradaban masyarakat Jawa Barat.',
+          'Kajian mendalam mengenai undak-usuk basa Sunda, falsafah silih asih silih asah silih asuh, serta pelestarian warisan peradaban masyarakat Tatar Sunda.',
     },
     {
-      'judul': 'Ensiklopedi Seni Tradisional Jawa Barat',
-      'penulis': 'Prof. Dr. Arthur S. Nalan',
+      'judul': 'Arsitektur Vernakular Kampung Naga',
+      'penulis': 'Nining Sumarni, M.Ds.',
       'penerbit': 'Kiblat Buku Utama (IKAPI)',
-      'harga': 'Rp 95.000',
-      'kategori': 'Budaya Sunda & Jabar',
+      'harga': 'Rp 58.000',
+      'kategori': 'Budaya Sunda',
       'rating': '4.8',
       'sinopsis':
-          'Dokumentasi visual dan catatan etnomusikologi lengkap mengenai seni wayang golek, angklung, jaipongan, tarawangsa, dan arsitektur rumah adat panggung di Jawa Barat.',
+          'Analisis tata ruang tradisional, kearifan mitigasi bencana alam, dan filosofi keselarasan bangunan bambu dengan ekosistem perbukitan Tasikmalaya.',
     },
     {
-      'judul': 'Peta Kuliner & Sejarah Gastronomi Priangan',
-      'penulis': 'Asep Saepudin, M.Hum.',
-      'penerbit': 'Pustaka Setia (IKAPI)',
-      'harga': 'Rp 50.000',
-      'kategori': 'Budaya Sunda & Jabar',
+      'judul': 'Pantun Sunda & Naskah Kuno Pajajaran',
+      'penulis': 'Dadan Wildan',
+      'penerbit': 'Pustaka Jaya Bandung (IKAPI)',
+      'harga': 'Rp 62.000',
+      'kategori': 'Budaya Sunda',
       'rating': '4.7',
       'sinopsis':
-          'Menelusuri sejarah kuliner khas Sunda sejak era kolonial hingga tren gastronomi modern, lengkap dengan filosofi kesegaran lalapan dan sambal khas tatar Sunda.',
+          'Transkripsi dan telaah filologis terhadap carita pantun buhun serta naskah lontar abad ke-16 yang merekam sejarah keemasan kerajaan Pajajaran.',
     },
   ];
 }

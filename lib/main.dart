@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'models/keranjang_buku_model.dart';
+import 'models/favorit_buku_model.dart';
 import 'navigation/app_routes.dart';
 
 void main() {
-  runApp(const AplikasiLiteraIKAPI());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => KeranjangBukuModel()),
+        ChangeNotifierProvider(create: (_) => FavoritBukuModel()),
+      ],
+      child: const AplikasiLiteraIKAPI(),
+    ),
+  );
 }
 
 class AplikasiLiteraIKAPI extends StatelessWidget {
