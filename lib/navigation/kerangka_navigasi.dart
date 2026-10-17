@@ -251,6 +251,50 @@ class _KerangkaNavigasiState extends State<KerangkaNavigasi> {
             },
           ),
           const Divider(),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Text(
+              'FITUR PRAKTIKUM 4 (INTERAKTIF)',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black45),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.app_registration_rounded, color: _primaryColor),
+            title: const Text('Kurasi Naskah Baru'),
+            subtitle: const Text('Form registrasi & gesture kurasi', style: TextStyle(fontSize: 11)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRoutes.formNaskah);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.map_rounded, color: _primaryColor),
+            title: const Text('Peta Jaringan IKAPI'),
+            subtitle: const Text('Lokasi sekretariat & galeri Bandung', style: TextStyle(fontSize: 11)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRoutes.petaIKAPI);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.bar_chart_rounded, color: _primaryColor),
+            title: const Text('Statistik Royalti'),
+            subtitle: const Text('Grafik batang fl_chart data penjualan', style: TextStyle(fontSize: 11)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRoutes.statistikRoyalti);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.forum_rounded, color: _primaryColor),
+            title: const Text('Tanya Redaksi IKAPI'),
+            subtitle: const Text('Konsultasi daring kurator penerbitan', style: TextStyle(fontSize: 11)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRoutes.tanyaRedaksi);
+            },
+          ),
+          const Divider(),
           ListTile(
             leading: const Icon(Icons.business_center_rounded, color: _primaryColor),
             title: const Text('Portal Penerbit & Royalti'),

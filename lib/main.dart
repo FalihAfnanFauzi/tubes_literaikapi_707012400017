@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'models/keranjang_buku_model.dart';
 import 'models/favorit_buku_model.dart';
+import 'models/kurasi_naskah_model.dart';
+import 'models/pesan_redaksi_model.dart';
 import 'navigation/app_routes.dart';
 
 void main() {
@@ -10,6 +12,8 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => KeranjangBukuModel()),
         ChangeNotifierProvider(create: (_) => FavoritBukuModel()),
+        ChangeNotifierProvider(create: (_) => KurasiNaskahModel()),
+        ChangeNotifierProvider(create: (_) => PesanRedaksiModel()),
       ],
       child: const AplikasiLiteraIKAPI(),
     ),

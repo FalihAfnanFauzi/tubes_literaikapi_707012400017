@@ -5,6 +5,10 @@ import '../pages/halaman_katalog.dart';
 import '../pages/halaman_koleksi_baca.dart';
 import '../pages/halaman_penerbit.dart';
 import '../pages/halaman_tentang.dart';
+import '../pages/halaman_form_naskah.dart';
+import '../pages/halaman_peta_ikapi.dart';
+import '../pages/halaman_statistik_royalti.dart';
+import '../pages/halaman_tanya_redaksi.dart';
 import 'kerangka_navigasi.dart';
 
 class AppRoutes {
@@ -15,6 +19,10 @@ class AppRoutes {
   static const String koleksiBaca = '/koleksi_baca';
   static const String tentang = '/tentang';
   static const String galat404 = '/galat_404';
+  static const String formNaskah = '/form_naskah';
+  static const String petaIKAPI = '/peta_ikapi';
+  static const String statistikRoyalti = '/statistik_royalti';
+  static const String tanyaRedaksi = '/tanya_redaksi';
 
   static Map<String, WidgetBuilder> daftarRoute() {
     return {
@@ -23,6 +31,10 @@ class AppRoutes {
       penerbit: (context) => const HalamanPenerbit(),
       koleksiBaca: (context) => const HalamanKoleksiBaca(),
       tentang: (context) => const HalamanTentang(),
+      formNaskah: (context) => const HalamanFormNaskah(),
+      petaIKAPI: (context) => const HalamanPetaIKAPI(),
+      statistikRoyalti: (context) => const HalamanStatistikRoyalti(),
+      tanyaRedaksi: (context) => const HalamanTanyaRedaksi(),
     };
   }
 

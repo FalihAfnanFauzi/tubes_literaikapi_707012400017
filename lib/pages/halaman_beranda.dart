@@ -136,6 +136,56 @@ class HalamanBeranda extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
+          // Layanan Interaktif Praktikum 4
+          const Text(
+            'Layanan Interaktif Praktikum 4',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+          ),
+          const SizedBox(height: 10),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 2.1,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            children: [
+              _buildModul4Card(
+                context,
+                'Kurasi Naskah',
+                'Form & Validasi',
+                Icons.edit_document,
+                primaryColor,
+                () => Navigator.pushNamed(context, AppRoutes.formNaskah),
+              ),
+              _buildModul4Card(
+                context,
+                'Peta Jaringan',
+                'Google Maps',
+                Icons.pin_drop_rounded,
+                Colors.teal.shade700,
+                () => Navigator.pushNamed(context, AppRoutes.petaIKAPI),
+              ),
+              _buildModul4Card(
+                context,
+                'Statistik Royalti',
+                'Grafik fl_chart',
+                Icons.analytics_rounded,
+                Colors.indigo.shade600,
+                () => Navigator.pushNamed(context, AppRoutes.statistikRoyalti),
+              ),
+              _buildModul4Card(
+                context,
+                'Tanya Redaksi',
+                'Chat Interaktif',
+                Icons.question_answer_rounded,
+                Colors.deepPurple.shade600,
+                () => Navigator.pushNamed(context, AppRoutes.tanyaRedaksi),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
           // Tombol Navigasi Cepat & Pengujian Rute
           const Text(
             'Menu Navigasi & Pengujian Sistem',
@@ -368,6 +418,61 @@ class HalamanBeranda extends StatelessWidget {
             );
           }
         },
+      ),
+    );
+  }
+
+  Widget _buildModul4Card(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+          boxShadow: const [
+            BoxShadow(color: Colors.black12, blurRadius: 3, offset: Offset(0, 1)),
+          ],
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: color.withValues(alpha: 0.12),
+              radius: 18,
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(fontSize: 10, color: Colors.black54),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -3,6 +3,11 @@
         android:label="tubes_literaikapi_707012400017"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- Kunci API Google Maps -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyD3UrkOvw6bWSipIiDjzb3RaOPVw8tkjOs"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
